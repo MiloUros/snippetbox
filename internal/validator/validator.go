@@ -1,34 +1,57 @@
 package validator
 
-import "unicode/utf8"
+import (
+	"regexp"
+	"strings"
+	"unicode/utf8"
+)
+
+var EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 type Validator struct {
-	FieldsErrors map[string]string
+	NonFieldErrors []string
+	FieldErrors    map[string]string
 }
 
-func (v *Validator) Valida() bool {
-	return len(v.FieldsErrors) == 0
+func (v *Validator) Valid() bool {
+	return len(v.FieldErrors) == 0 && len(v.NonFieldErrors) == 0
 }
 
-func (v Validator) AddFieldError(key, message string) {
+func (v *Validator) AddNonFieldError(message string) {
+	v.NonFieldErrors = append(v.NonFieldErrors, message)
+}
 
-	if v.FieldsErrors == nil {
-		v.FieldsErrors = make(map[string]string)
+func (v *Validator) AddFieldError(key, message string) {
+
+	if v.FieldErrors == nil {
+		v.FieldErrors = make(map[string]string)
 	}
 
-	if _, exists := v.FieldsErrors[key]; !exists {
-		v.FieldsErrors[key] = message
+	if _, exists := v.FieldErrors[key]; !exists {
+		v.FieldErrors[key] = message
 	}
 }
 
-func (v Validator) CheckFieldOk(ok bool, key, message string) {
+func (v *Validator) CheckFieldOk(ok bool, key, message string) {
 	if !ok {
 		v.AddFieldError(key, message)
 	}
 }
 
-func NotBlank(value string, n int) bool {
+func NotBlank(value string) bool {
+	return strings.TrimSpace(value) != ""
+}
+
+func MaxChars(value string, n int) bool {
 	return utf8.RuneCountInString(value) <= n
+}
+
+func MinChars(value string, n int) bool {
+	return utf8.RuneCountInString(value) >= n
+}
+
+func Matches(value string, rx *regexp.Regexp) bool {
+	return rx.MatchString(value)
 }
 
 func PermittedInt(value int, permittedValues ...int) bool {
@@ -37,5 +60,5 @@ func PermittedInt(value int, permittedValues ...int) bool {
 			return true
 		}
 	}
-	return true
+	return false
 }
