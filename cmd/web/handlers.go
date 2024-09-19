@@ -92,7 +92,7 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	form.CheckFieldOk(validator.NotBlank(form.Title), "title", "This field cannot be blank")
 	form.CheckFieldOk(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
 	form.CheckFieldOk(validator.NotBlank(form.Content), "content", "This field cannot be blank")
-	form.CheckFieldOk(validator.PermittedInt(form.Expires, 1, 7, 265), "expires", "This field must equal 1, 7, 365")
+	form.CheckFieldOk(validator.PermittedValue(form.Expires, 1, 7, 265), "expires", "This field must equal 1, 7, 365")
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
@@ -156,7 +156,7 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		data := app.newTemplateData(r)
 		data.Form = form
-		app.render(w, http.StatusOK, "signup.html", data)
+		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		return
 	}
 
@@ -167,7 +167,7 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 
 			data := app.newTemplateData(r)
 			data.Form = form
-			app.render(w, http.StatusOK, "signup.html", data)
+			app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		} else {
 			app.serverError(w, err)
 		}
@@ -202,7 +202,7 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		data := app.newTemplateData(r)
 		data.Form = form
-		app.render(w, http.StatusOK, "login.html", data)
+		app.render(w, http.StatusUnprocessableEntity, "login.html", data)
 		return
 	}
 
@@ -242,4 +242,7 @@ func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
 	app.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+func ping(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("OK"))
 }
